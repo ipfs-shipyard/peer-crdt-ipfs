@@ -3,7 +3,7 @@
 
 const chai = require('chai')
 const dirtyChai = require('dirty-chai')
-// const expect = chai.expect
+const expect = chai.expect
 chai.use(dirtyChai)
 
 const cuid = require('cuid')
@@ -59,6 +59,14 @@ describe('basic', () => {
   it('CRDT network can be started', function () {
     this.timeout(10000)
     return crdt.network.start()
+  })
+
+  it('converges', (done) => {
+    crdt.once('change', () => {
+      expect(crdt.value()).to.deep.equal(['a'])
+      done()
+    })
+    crdt.push('a')
   })
 
   it('CRDT network can be stopped', () => crdt.network.stop())

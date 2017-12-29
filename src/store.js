@@ -8,16 +8,22 @@ function createStore (id, ipfs) {
   return new IPFSStore(id, ipfs)
 }
 
+const defaultDagOptions = {
+  format: 'dag-cbor'
+  // hashAlg: 'sha2-256'
+}
+
 class IPFSStore {
-  constructor (id, ipfs) {
+  constructor (id, ipfs, dagOptions) {
     this._headKey = id + '/HEAD'
     this._ipfs = ipfs
+    this._dagOptions = Object.assign({}, defaultDagOptions, dagOptions)
   }
 
   put (entry) {
     const [value, auth, parents] = entry
     const dagEntry = [value, auth, parents.map((parentId) => ({ '/': parentId }))]
-    return this._ipfs.dag.put(dagEntry).then(cidToString)
+    return this._ipfs.dag.put(dagEntry, this._dagOptions).then(cidToString)
   }
 
   get (id) {
@@ -31,8 +37,8 @@ class IPFSStore {
   }
 
   async getHead () {
-    const ds = await this._datastore()
-    return ds.get(this._headKey).catch(notFound).then(decode)
+    const store = await this._datastore()
+    return store.get(this._headKey).catch(notFound).then(decode)
   }
 
   _datastore () {

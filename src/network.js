@@ -28,14 +28,21 @@ class Network {
     this._broadcastHead = this._broadcastHead.bind(this)
   }
 
-  start () {
-    return new Promise((resolve, reject) => {
+  async start () {
+    return new Promise(async (resolve, reject) => {
+      const getIpfsId = async () => {
+        const peerInfo = await this._ipfs.id()
+        this._peerId = peerInfo.id
+      }
+
       if (this._ipfs.isOnline()) {
+        await getIpfsId()
         return resolve()
       }
       this._ipfs.on('error', reject)
-      this._ipfs.once('ready', () => {
+      this._ipfs.once('ready', async () => {
         this._ipfs.removeListener('error', reject)
+        await getIpfsId()
         this._startPubSubRoom()
         resolve()
       })
@@ -59,8 +66,11 @@ class Network {
       clearTimeout(this._timeout)
       this._timeout = null
     }
-    this._room.broadcast(this._head)
     this._timeout = setTimeout(this._broadcastHead, this._broadcastTimeoutValue())
+
+    if (this._head) {
+      this._room.broadcast(this._head)
+    }
   }
 
   _broadcastTimeoutValue () {
@@ -77,13 +87,19 @@ class Network {
   }
 
   async stop () {
+    if (this._timeout) {
+      clearTimeout(this._timeout)
+      this._timeout = null
+    }
     this._room.removeListener('message', this._onMessage)
     this._room.removeListener('peer joined', this._onPeerJoined)
     this._room.removeListener('peer left', this._onPeerLeft)
   }
 
   _onMessage (message) {
-    this._onRemoteHead(Buffer.from(message.data).toString())
+    if (message.from !== this._peerId) {
+      this._onRemoteHead(Buffer.from(message.data).toString())
+    }
   }
 
   _onPeerJoined () {
