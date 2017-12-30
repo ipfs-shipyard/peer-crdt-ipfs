@@ -1,6 +1,7 @@
 'use strict'
 
 const promisify = require('es6-promisify')
+const parent = require('./parent')
 
 module.exports = createStore
 
@@ -22,13 +23,16 @@ class IPFSStore {
 
   put (entry) {
     const [value, auth, parents] = entry
-    const dagEntry = [value, auth, parents.map((parentId) => ({ '/': parentId }))]
+    const dagEntry = [value, auth, parents.map(parent.encode)]
     return this._ipfs.dag.put(dagEntry, this._dagOptions).then(cidToString)
   }
 
   get (id) {
-    return this._ipfs.dag.get(id)
-      .then(({value: [value, auth, parents]}) => [value, auth, parents.map((parent) => parent['/'])])
+    if (typeof id !== 'string') {
+      throw new Error('need string as id' + id)
+    }
+    return this._ipfs.dag.get(id, this._dagOptions)
+      .then(({value: [value, auth, parents]}) => [value, auth, parents.map(parent.decode)])
   }
 
   async setHead (head) {

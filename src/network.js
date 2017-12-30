@@ -1,6 +1,9 @@
 'use strict'
 
 const PubSubRoom = require('ipfs-pubsub-room')
+const B58 = require('bs58')
+
+const parent = require('./parent')
 
 module.exports = createNetwork
 
@@ -11,7 +14,11 @@ function createNetwork (id, ipfs, onRemoteHead, options) {
 const defaultOptions = {
   minBroadcastInterval: 200,
   maxBroadcastInterval: 5000,
-  totalNetworkBroadcastInterval: 500
+  totalNetworkBroadcastInterval: 500,
+  dagOptions: {
+    format: 'dag-cbor'
+    // hashAlg: 'sha2-256'
+  }
 }
 
 class Network {
@@ -20,7 +27,9 @@ class Network {
     this._ipfs = ipfs
     this._onRemoteHead = onRemoteHead
     this._options = Object.assign({}, defaultOptions, options)
+    this._options.dagOptions = Object.assign({}, defaultOptions.dagOptions, options && options.dagOptions)
     this._peerCount = 0
+    this._stopped = false
 
     this._onMessage = this._onMessage.bind(this)
     this._onPeerJoined = this._onPeerJoined.bind(this)
@@ -35,8 +44,13 @@ class Network {
         this._peerId = peerInfo.id
       }
 
+      if (this._stopped) {
+        return
+      }
+
       if (this._ipfs.isOnline()) {
         await getIpfsId()
+        this._startPubSubRoom()
         return resolve()
       }
       this._ipfs.on('error', reject)
@@ -57,7 +71,7 @@ class Network {
   }
 
   setHead (head) {
-    this._head = head
+    this._head = B58.decode(head)
     this._broadcastHead()
   }
 
@@ -68,8 +82,12 @@ class Network {
     }
     this._timeout = setTimeout(this._broadcastHead, this._broadcastTimeoutValue())
 
-    if (this._head) {
-      this._room.broadcast(this._head)
+    if (this._head && this._room) {
+      try {
+        this._room.broadcast(this._head)
+      } catch (err) {
+        console.log('Error caught while broadcasting:', err)
+      }
     }
   }
 
@@ -82,28 +100,39 @@ class Network {
   }
 
   get (id) {
-    return this._ipfs.dag.get(id)
-      .then(({value: [value, auth, parents]}) => [value, auth, parents.map((parent) => parent['/'])])
+    return this._ipfs.dag.get(id, this._options.dagOptions)
+      .then(({value: [value, auth, parents]}) => [value, auth, parents.map(parent.decode)])
   }
 
   async stop () {
+    if (this._stopped) {
+      return
+    }
+
+    this._stopped = true
     if (this._timeout) {
       clearTimeout(this._timeout)
       this._timeout = null
     }
-    this._room.removeListener('message', this._onMessage)
-    this._room.removeListener('peer joined', this._onPeerJoined)
-    this._room.removeListener('peer left', this._onPeerLeft)
+    if (this._room) {
+      this._room.leave()
+      this._room.removeListener('message', this._onMessage)
+      this._room.removeListener('peer joined', this._onPeerJoined)
+      this._room.removeListener('peer left', this._onPeerLeft)
+      this._room = null
+    }
   }
 
   _onMessage (message) {
     if (message.from !== this._peerId) {
-      this._onRemoteHead(Buffer.from(message.data).toString())
+      const head = B58.encode(Buffer.from(message.data))
+      this._onRemoteHead(head)
     }
   }
 
   _onPeerJoined () {
     this._peerCount++
+    this._broadcastHead()
   }
 
   _onPeerLeft () {
