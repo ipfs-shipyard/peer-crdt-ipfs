@@ -40,6 +40,7 @@
   "dependencies": {
     "bs58": "^4.0.1",
     "es6-promisify": "^5.0.0",
-    "ipfs-pubsub-room": "^1.1.5"
+    "ipfs-pubsub-room": "^1.1.5",
+    "p-limit": "^1.1.0"
   }
 }
