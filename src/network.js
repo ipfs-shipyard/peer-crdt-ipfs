@@ -191,6 +191,9 @@ class Network {
   }
 
   async _serializedOnMessage (message) {
+    if (this._stopped) {
+      return
+    }
     try {
       const msg = JSON.parse(Buffer.from(message.data))
       const head = msg[0]
@@ -199,6 +202,9 @@ class Network {
       let all = [head, ...parents]
       all = all.map(B58.decode)
       await this._ipfs._bitswap.getMany(all)
+      if (this._stopped) {
+        return
+      }
       this._processingRemoteHead = false
       this._onRemoteHead(head)
     } catch (err) {
