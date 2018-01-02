@@ -23,12 +23,8 @@ const defaultOptions = {
   maxAncestorsBroadcast: 10
 }
 
-let seq = 0
-
-
 class Network {
   constructor (id, ipfs, onRemoteHead, options) {
-    this._seq = ++seq
     this._id = id
     this._ipfs = ipfs
     this._onRemoteHead = onRemoteHead
@@ -137,7 +133,7 @@ class Network {
     await resolveAncestryAndBroadcast(this._head)
   }
 
-  _broadcastHeadAndAncestors(head, ancestors) {
+  _broadcastHeadAndAncestors (head, ancestors) {
     if (!this._room) {
       return
     }
@@ -197,7 +193,7 @@ class Network {
   async _serializedOnMessage (message) {
     try {
       const msg = JSON.parse(Buffer.from(message.data))
-      const head = msg [0]
+      const head = msg[0]
       this._processingRemoteHead = head
       const parents = msg[1]
       let all = [head, ...parents]
