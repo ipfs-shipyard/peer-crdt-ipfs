@@ -21,13 +21,17 @@ const defaultOptions = {
   }
 }
 
+let seq = 0
+
 class Network {
   constructor (id, ipfs, onRemoteHead, options) {
+    this._seq = ++seq
     this._id = id
     this._ipfs = ipfs
     this._onRemoteHead = onRemoteHead
     this._options = Object.assign({}, defaultOptions, options)
-    this._options.dagOptions = Object.assign({}, defaultOptions.dagOptions, options && options.dagOptions)
+    this._options.dagOptions = Object.assign(
+      {}, defaultOptions.dagOptions, options && options.dagOptions)
     this._peerCount = 0
     this._stopped = false
 
@@ -124,10 +128,8 @@ class Network {
   }
 
   _onMessage (message) {
-    if (message.from !== this._peerId) {
-      const head = B58.encode(Buffer.from(message.data))
-      this._onRemoteHead(head)
-    }
+    const head = B58.encode(Buffer.from(message.data))
+    this._onRemoteHead(head)
   }
 
   _onPeerJoined () {
