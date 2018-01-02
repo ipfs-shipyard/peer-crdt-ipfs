@@ -1,6 +1,6 @@
 {
   "name": "peer-crdt-ipfs",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "peer-crdt network and store over IPFS",
   "main": "src/index.js",
   "scripts": {
