@@ -41,7 +41,7 @@ describe('basic', () => {
     })
   })
 
-  after(() => ipfs.stop())
+  after((done) => ipfs.stop(done))
 
   after((done) => {
     repo.teardown(done)
@@ -67,6 +67,24 @@ describe('basic', () => {
       done()
     })
     crdt.push('a')
+  })
+
+  it('mirrors embeds', function (done) {
+    this.timeout(10000)
+    crdt.once('change', (event) => {
+      expect(event.type).to.equal('insert')
+      const embedded = event.value
+      embedded.on('change', () => {
+        if (embedded.value().length === 2) {
+          expect(embedded.value().sort()).to.deep.equal(['a', 'b'])
+          done()
+        }
+      })
+    })
+    const embed = crdt.createForEmbed('rga')
+    crdt.push(embed)
+    embed.push('a')
+    embed.push('b')
   })
 
   it('CRDT network can be stopped', () => crdt.network.stop())
