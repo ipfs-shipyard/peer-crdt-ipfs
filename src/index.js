@@ -16,8 +16,8 @@ function create (ipfs, options) {
             return reject(err)
           }
           resolve([
-            ipfs._peerInfo.id.toB58String(),
-            signature.toString('hex')
+            ipfs._peerInfo.id.id,
+            signature
           ])
         })
       })
