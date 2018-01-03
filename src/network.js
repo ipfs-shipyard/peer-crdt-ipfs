@@ -2,7 +2,6 @@
 
 const PubSubRoom = require('ipfs-pubsub-room')
 const B58 = require('bs58')
-const PLimit = require('p-limit')
 const debounce = require('lodash.debounce')
 
 const parent = require('./parent')
@@ -36,7 +35,9 @@ class Network {
     this._options = Object.assign({}, defaultOptions, options)
     this._options.dagOptions = Object.assign(
       {}, defaultOptions.dagOptions, options && options.dagOptions)
+
     this._peerCount = 0
+    this._peerHeads = new Map()
     this._stopped = false
 
     this.setHead = debounce(this.setHead.bind(this), this._options.debounceSetHeadMS)
@@ -45,8 +46,6 @@ class Network {
     this._onPeerJoined = this._onPeerJoined.bind(this)
     this._onPeerLeft = this._onPeerLeft.bind(this)
     this._broadcastHead = this._broadcastHead.bind(this)
-
-    this._serialize = PLimit(1)
   }
 
   async start () {
@@ -185,29 +184,26 @@ class Network {
   }
 
   _onMessage (message) {
-    // if (this._processingRemoteHead) {
-    //   return
-    // }
-
     try {
       const msg = JSON.parse(Buffer.from(message.data))
       const head = msg[0]
-      if (this._processingRemoteHead === head) {
-        return
+      const peer = message.from
+      const currentHead = this._peerHeads.get(peer)
+      if (currentHead !== head) {
+        this._peerHeads.set(peer, head)
+        this._onNewPeerHead(peer, msg)
       }
-      this._serialize(() => this._serializedOnMessage(msg))
     } catch (err) {
       console.log('Error processing message:', err)
     }
   }
 
-  async _serializedOnMessage (msg) {
+  async _onNewPeerHead (peer, msg) {
     if (this._stopped) {
       return
     }
     try {
       const head = msg[0]
-      this._processingRemoteHead = head
       const parents = msg[1]
       let all = [head, ...parents]
       all = all.map(B58.decode)
@@ -216,9 +212,7 @@ class Network {
         return
       }
       await this._onRemoteHead(head)
-      this._processingRemoteHead = false
     } catch (err) {
-      this._processingRemoteHead = false
       console.log('Error processing message:', err)
     }
   }
@@ -228,7 +222,8 @@ class Network {
     this._broadcastHead()
   }
 
-  _onPeerLeft () {
+  _onPeerLeft (peer) {
+    this._peerHeads.delete(peer)
     this._peerCount--
   }
 }
