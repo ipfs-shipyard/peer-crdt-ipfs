@@ -16,7 +16,7 @@ const defaultOptions = {
   minBroadcastInterval: 1000,
   maxBroadcastInterval: 5000,
   totalNetworkBroadcastInterval: 1000,
-  dagOptions: {
+  dag: {
     format: 'dag-cbor'
     // hashAlg: 'sha2-256'
   },
@@ -33,8 +33,8 @@ class Network {
     this._ipfs = ipfs
     this._onRemoteHead = onRemoteHead
     this._options = Object.assign({}, defaultOptions, options)
-    this._options.dagOptions = Object.assign(
-      {}, defaultOptions.dagOptions, options && options.dagOptions)
+    this._options.dag = Object.assign(
+      {}, defaultOptions.dag, options && options.dag)
 
     this._peerCount = 0
     this._peerHeads = new Map()
@@ -160,7 +160,7 @@ class Network {
   }
 
   get (id) {
-    return this._ipfs.dag.get(id, this._options.dagOptions)
+    return this._ipfs.dag.get(id, this._options.dag)
       .then(({value: [value, auth, parents]}) => [value, auth, parents.map(parent.decode)])
   }
 
