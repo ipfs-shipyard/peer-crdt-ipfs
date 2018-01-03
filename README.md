@@ -45,7 +45,6 @@ The constructor exposed in `peer-crdt-ipfs` accepts, as the second argument, an 
 * `dag` - object with:
   * `format` ('dag-cbor')
   * `hashAlg` ('sha2-256')
-  }
 * `maxAncestorsBroadcast` (10)
 * `debounceSetHeadMS` (500)
 
