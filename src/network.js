@@ -16,7 +16,7 @@ function createNetwork (id, ipfs, onRemoteHead, options) {
 const defaultOptions = {
   minBroadcastInterval: 1000,
   maxBroadcastInterval: 5000,
-  totalNetworkBroadcastInterval: 500,
+  totalNetworkBroadcastInterval: 1000,
   dagOptions: {
     format: 'dag-cbor'
     // hashAlg: 'sha2-256'
@@ -25,8 +25,11 @@ const defaultOptions = {
   debounceSetHeadMS: 500
 }
 
+let ref = 0
+
 class Network {
   constructor (id, ipfs, onRemoteHead, options) {
+    this._ref = ++ref
     this._id = id
     this._ipfs = ipfs
     this._onRemoteHead = onRemoteHead
@@ -182,24 +185,27 @@ class Network {
   }
 
   _onMessage (message) {
+    // if (this._processingRemoteHead) {
+    //   return
+    // }
+
     try {
       const msg = JSON.parse(Buffer.from(message.data))
       const head = msg[0]
       if (this._processingRemoteHead === head) {
         return
       }
+      this._serialize(() => this._serializedOnMessage(msg))
     } catch (err) {
       console.log('Error processing message:', err)
     }
-    this._serialize(() => this._serializedOnMessage(message))
   }
 
-  async _serializedOnMessage (message) {
+  async _serializedOnMessage (msg) {
     if (this._stopped) {
       return
     }
     try {
-      const msg = JSON.parse(Buffer.from(message.data))
       const head = msg[0]
       this._processingRemoteHead = head
       const parents = msg[1]
@@ -209,8 +215,8 @@ class Network {
       if (this._stopped) {
         return
       }
+      await this._onRemoteHead(head)
       this._processingRemoteHead = false
-      this._onRemoteHead(head)
     } catch (err) {
       this._processingRemoteHead = false
       console.log('Error processing message:', err)
