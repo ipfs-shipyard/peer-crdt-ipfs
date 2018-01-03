@@ -43,6 +43,8 @@ describe('basic', () => {
 
   after((done) => ipfs.stop(done))
 
+  after((done) => setTimeout(done, 1900))
+
   after((done) => {
     repo.teardown(done)
   })

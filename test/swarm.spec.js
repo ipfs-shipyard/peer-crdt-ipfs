@@ -41,6 +41,8 @@ describe('swarm', () => {
     each(ipfss, (ipfs, cb) => ipfs.stop(cb), done)
   })
 
+  after((done) => setTimeout(done, 1900))
+
   after((done) => {
     each(repos, (repo, cb) => repo.teardown(cb), done)
   })
