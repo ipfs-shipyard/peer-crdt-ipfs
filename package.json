@@ -41,6 +41,7 @@
     "bs58": "^4.0.1",
     "es6-promisify": "^5.0.0",
     "ipfs-pubsub-room": "^1.1.5",
+    "lodash.debounce": "^4.0.8",
     "p-limit": "^1.1.0"
   }
 }

@@ -3,6 +3,7 @@
 const PubSubRoom = require('ipfs-pubsub-room')
 const B58 = require('bs58')
 const PLimit = require('p-limit')
+const debounce = require('lodash.debounce')
 
 const parent = require('./parent')
 
@@ -20,7 +21,8 @@ const defaultOptions = {
     format: 'dag-cbor'
     // hashAlg: 'sha2-256'
   },
-  maxAncestorsBroadcast: 10
+  maxAncestorsBroadcast: 10,
+  debounceSetHeadMS: 500
 }
 
 class Network {
@@ -33,6 +35,8 @@ class Network {
       {}, defaultOptions.dagOptions, options && options.dagOptions)
     this._peerCount = 0
     this._stopped = false
+
+    this.setHead = debounce(this.setHead.bind(this), this._options.debounceSetHeadMS)
 
     this._onMessage = this._onMessage.bind(this)
     this._onPeerJoined = this._onPeerJoined.bind(this)
