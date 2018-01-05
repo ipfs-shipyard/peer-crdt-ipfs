@@ -12,6 +12,8 @@ const PeerCRDT = require('peer-crdt')
 const PeerCrdtIpfs = require('../')
 
 const createRepo = require('./helpers/create-repo-node')
+const encrypt = require('./helpers/encrypt')
+const decrypt = require('./helpers/decrypt')
 
 describe('basic', () => {
   let id = cuid()
@@ -54,7 +56,7 @@ describe('basic', () => {
   })
 
   it('can be applied to peer-crdt', () => {
-    peerCRDT = PeerCRDT.defaults(peerCrdtIpfs)
+    peerCRDT = PeerCRDT.defaults(peerCrdtIpfs).defaults({ encrypt, decrypt })
     crdt = peerCRDT.create('rga', id)
   })
 

@@ -6,6 +6,9 @@ const PeerCrdtIpfs = require('../../')
 const PeerCRDT = require('peer-crdt')
 const each = require('async/each')
 
+const encrypt = require('./encrypt')
+const decrypt = require('./decrypt')
+
 module.exports = createSwarm
 
 async function createSwarm (count) {
@@ -41,7 +44,8 @@ function createNode () {
     ipfs.once('ready', () => {
       ipfs.removeListener('error', reject)
       const peerCrdtIpfs = PeerCrdtIpfs(ipfs)
-      resolve([PeerCRDT.defaults(peerCrdtIpfs), repo, ipfs])
+      const CRDT = PeerCRDT.defaults(peerCrdtIpfs).defaults({ encrypt, decrypt })
+      resolve([CRDT, repo, ipfs])
     })
   })
 }

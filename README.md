@@ -22,11 +22,26 @@ ipfs = new IPFS({
   }
 })
 
+const encrypt = async (value) => {
+  return await somehowEncrypt(value)
+}
+
+const decrypt = async (buffer) => {
+  return await somehowDecrypt(buffer)
+}
+
+const options = {
+  encrypt,
+  decrypt
+}
+
 // Create a peer-crdt-ifps config object:
-const peerCrdtIpfs = PeerCrdtIpfs(ipfs, options)
+const peerCrdtIpfs = PeerCrdtIpfs(ipfs)
 
 // Use it to configure peer-crdt
-const CRDT = PeerCRDT.defaults(peerCrdtIpfs)
+const CRDT = PeerCRDT
+  .defaults(peerCrdtIpfs)
+  .defaults(options)
 
 // Create and use a CRDT at will
 const crdt = CRDT.create(type, id)
@@ -39,6 +54,8 @@ const crdt = CRDT.create(type, id)
 
 The constructor exposed in `peer-crdt-ipfs` accepts, as the second argument, an object with the following options (defaults in parenthesis):
 
+* `encrypt`: an async function that accepts a value and resolves to a buffer.
+* `decrypt`: inverse function of the above: an async function that accepts a buffer and resolves to a value.
 * `minBroadcastInterval` (1000)
 * `maxBroadcastInterval` (5000)
 * `totalNetworkBroadcastInterval` (1000)
