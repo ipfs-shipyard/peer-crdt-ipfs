@@ -82,6 +82,7 @@ class Network {
   }
 
   setHead (head) {
+    console.log('HEAD:', head)
     this._head = head
     this._broadcastHead()
   }
@@ -205,9 +206,12 @@ class Network {
     try {
       const head = msg[0]
       const parents = msg[1]
-      let all = [head, ...parents]
-      all = all.map(B58.decode)
-      await this._ipfs._bitswap.getMany(all)
+      const allHashes = [head, ...parents].map(B58.decode).map(Buffer.from.bind(Buffer))
+
+      const start = Date.now()
+      console.log('getting many', allHashes)
+      await this._ipfs._bitswap.getMany(allHashes)
+      console.log('getMany took', Date.now() - start)
       if (this._stopped) {
         return
       }

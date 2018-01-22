@@ -44,7 +44,9 @@ function createNode () {
     ipfs.once('ready', () => {
       ipfs.removeListener('error', reject)
       const peerCrdtIpfs = PeerCrdtIpfs(ipfs)
-      const CRDT = PeerCRDT.defaults(peerCrdtIpfs).defaults({ encrypt, decrypt })
+      const CRDT = PeerCRDT.defaults(peerCrdtIpfs).defaults({
+        signAndEncrypt: encrypt,
+        decryptAndVerify: decrypt })
       resolve([CRDT, repo, ipfs])
     })
   })

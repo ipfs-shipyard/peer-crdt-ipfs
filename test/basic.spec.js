@@ -56,7 +56,10 @@ describe('basic', () => {
   })
 
   it('can be applied to peer-crdt', () => {
-    peerCRDT = PeerCRDT.defaults(peerCrdtIpfs).defaults({ encrypt, decrypt })
+    peerCRDT = PeerCRDT.defaults(peerCrdtIpfs).defaults({
+      signAndEncrypt: encrypt,
+      decryptAndVerify: decrypt
+    })
     crdt = peerCRDT.create('rga', id)
   })
 
