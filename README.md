@@ -19,20 +19,29 @@ const PeerCrdtIpfs = require('peer-crdt-ipfs')
 ipfs = new IPFS({
   EXPERIMENTAL: {
     pubsub: true
+  },
+  config: {
+    Addresses: {
+      Swarm: [
+        '/dns4/ws-star.discovery.libp2p.io/tcp/443/wss/p2p-websocket-star',
+        '/dns4/ws-star-signal-2.servep2p.com/tcp/443/wss/p2p-websocket-star'
+      ]
+    }
   }
+
 })
 
-const encrypt = async (value) => {
-  return await somehowEncrypt(value)
+const signAndEncrypt = async (value) => {
+  return await somehowSignAndEncrypt(value)
 }
 
-const decrypt = async (buffer) => {
-  return await somehowDecrypt(buffer)
+const decryptAndVerify = async (buffer) => {
+  return await somehowDecryptAndVerify(buffer)
 }
 
 const options = {
-  encrypt,
-  decrypt
+  signAndEncrypt,
+  decryptAndVerify
 }
 
 // Create a peer-crdt-ifps config object:
@@ -54,8 +63,6 @@ const crdt = CRDT.create(type, id)
 
 The constructor exposed in `peer-crdt-ipfs` accepts, as the second argument, an object with the following options (defaults in parenthesis):
 
-* `encrypt`: an async function that accepts a value and resolves to a buffer.
-* `decrypt`: inverse function of the above: an async function that accepts a buffer and resolves to a value.
 * `minBroadcastInterval` (1000)
 * `maxBroadcastInterval` (5000)
 * `totalNetworkBroadcastInterval` (1000)
